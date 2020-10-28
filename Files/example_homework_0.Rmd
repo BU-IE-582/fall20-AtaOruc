@@ -1,0 +1,33 @@
+---
+title: "Interesting R Examples"
+author: "Enes Ata Oruç - IE582 - Fall 2020"
+---
+```{r,echo=FALSE,results="hide"}
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+1. [Exploring Survival on the Titanic](https://www.kaggle.com/mrisdal/exploring-survival-on-the-titanic)
+
+    This example is important because it is an R Notebook on Titanic data set. Titanic is considered as one of the Data Science 101 data set and this notebook provides a good exploratory data analysis. It is also a Kaggle Kernel, which is a very good source for this kind of example R codes. The notebook also covers feature engineering, missing data imputation and modeling.
+
+2.[Personalised Medicine](https://www.kaggle.com/headsortails/personalised-medicine-eda-with-tidy-r)
+   
+     In this project it has been challenged to automatically classify genetic mutations that contribute to cancer tumor growth (so-called “drivers”) in the presence of mutations that are don’t affect the tumors (“passengers”).
+     
+3.[Insurance Cross Sell Logistic Regression Model](https://www.kaggle.com/erickdcohen/insurance-cross-sell-logistic-regression-model/notebook)
+    
+     Logistic regression model is used in this project, in order to predict whether clients would want vehicle insurance if they already had a health policy.
+
+4.[Video Game Sales - EDA](https://www.kaggle.com/upadorprofzs/eda-video-game-sales)
+
+     In this project, only deal is exploratory analysis, where the objective is to understand how the data is distributed and generate insight for future decision-making, this analysis aims to explore as much as possible the data in a simple, intuitive and informative way.
+
+5.[Netflix Movies and TV Shows: Analysis in  R](https://www.kaggle.com/seshadrikolluri/netflix-movies-and-tv-shows-analysis-in-r)
+
+    There are 4 analyzes in this project. 1- Number of shows available in Netflix as a function of time, 2- Which countries are producing most shows ?, 3- Show Categories: Correlations and most frequent, 4- Exploring data related to actors. This is a good sample for exploratory data analysis and data visualization on R.
+
+
+
+
+
