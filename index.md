@@ -8,3 +8,6 @@ There will be the assignments done for this course.
 
 ### Homework Assignment 0
 - [R Examples](Files/example_homework_0.html): Summary of five interesting R examples using RMarkdown.
+
+### Homework Assignment 1
+- [English Premier League](Files/HW1_IE582.html): Homework1 English Premier League plots and analysis.
