@@ -44,7 +44,10 @@ Histograms for Task 1
 
 Part 1
 
-Task 1a: Histogram for Home Goals
+In the first part of the Task 1 of the assignment, histograms are created for Home Score, Away Score and Home-Away Score goals. 
+Each of 3 histograms prepared seperately.
+
+Task 1a: Histogram for Home Score (Goals)
 
 ```{r plots, echo=TRUE}
 ggplot(data=data_league, aes(x=FTHG), binwidth=1) + geom_histogram(col="black", fill="Cyan", alpha = .5) +labs(title="Histogram for Home Goals", x="Home Goals", y="Number of Games")
@@ -52,20 +55,22 @@ ggplot(data=data_league, aes(x=FTHG), binwidth=1) + geom_histogram(col="black", 
 
 ```
 
-Task 1b: Histogram for Away Goals
+Task 1b: Histogram for Away Score (Goals)
 
 ```{r plots_2, echo=TRUE}
 ggplot(data=data_league, aes(x=FTAG), binwidth=1) + geom_histogram(col="black",fill="dark blue", alpha = .5) + 
   labs(title="Histogram for Away Goals", x="Away Goals", y="Number of Games") 
 ```
 
-Task 1c: Histogram for Home - Away Goals
+Task 1c: Histogram for Home - Away Score (Goals)
 
 ```{r plots_3, echo=TRUE}
 ggplot(data_league) + geom_histogram(aes(x = FTHG-FTAG), binwidth=1, col="black", fill="orange") + xlab("Home Goals – Away Goals") + ylab("Number of Games") + theme(plot.caption=element_text(hjust = 0.5))
 ```
 
-Part 2: Density curve added to Home Goals and Away Goals Histograms in order to see if they show Poisson distribution characteristics
+Part 2: This is the part 2 of the Task 1. 
+
+Density curves added to Home Goals and Away Goals Histograms in order to see if they show Poisson distribution characteristics.
 
 
 ```{r plots_4}
@@ -92,13 +97,15 @@ p2=ggplot(data_league,aes(FTAG)) + geom_histogram(aes(fill="Away Goals"),binwidt
 grid.arrange(p1,p2,ncol=2)
 ```
 
+As it can be seen from the density curve added histograms, they show the poisson distribution characteristics.
 
 
 Task 2
 
+The aim of this task is to understand if bookmakers are good enough in setting their odds for “draw” bets.
 For this task I choose (B365H, B365D, B365A) , (BWH, BWD, BWA) , (IWH, IWD, IWA) and (PSH, PSD, PSA) as Bookmakers. 
 
-Let's calculate the P(Home Win), P(Draw) and P(Away Win) for selected bet options:
+Task 2.1 Let's calculate the P(Home Win), P(Draw) and P(Away Win) for selected bet options:
 ```{r setup_1, echo = TRUE}
 data_league$prob_B365H <- 1/(data_league$B365H)
 data_league$prob_B365D <- 1/(data_league$B365D)
@@ -123,7 +130,7 @@ data_league %>%
   colnames()
 ```
 
-Normalization of the previous odds:
+Task 2.2 Normalization of the previous odds for each bookmakers:
 
 ```{r setup_3, echo = TRUE}
 
@@ -153,9 +160,10 @@ data_league %>%
   colnames()
 ```
 
-Discretization and Plotting for Task 2.3:
+Task 2.3: Discretization and Plotting
+In this part I created 20 bins.
 
-BET 365:
+For BET 365 (B365) :
 ```{r setup_5, echo = TRUE}
 #FTR
 data_league = data_league %>%
@@ -309,6 +317,10 @@ Results for Task 2:
 
 TASK 3: 
 
+There can be some events during the matches that create noise in the outcomes. 
+
+For this task Task 2.3 and Task 2.4 revisited with removing the having a red card situation.
+
 Effect of the Red Cards:
 
 
@@ -347,7 +359,8 @@ p7 <- ggplot() + geom_point(aes(x = N_prob_B365H - N_prob_B365A, y = drawB365), 
        x = 'P(Home) - P(Away) ',
        y = 'P(Draw) ')
   p7
-# Comparison between Normal version vs No Red Card version  
+
+# Comparison between Normal version vs No Red Card version for B365  
 grid.arrange(p3,p7,ncol=2)
 ```
 For BW:
@@ -384,7 +397,8 @@ p8 <- ggplot() + geom_point(aes(x = N_prob_BWH - N_prob_BWA, y = drawBW), data =
   labs(title = 'BW',
        x = 'P(Home) - P(Away) ',
        y = 'P(Draw) ')
-# Comparison between Normal Version vs No Red Card Version
+
+# Comparison between Normal Version vs No Red Card Version For BW
 grid.arrange(p4,p8,ncol=2)
 ```
 For IW:
@@ -421,7 +435,8 @@ p9 <- ggplot() + geom_point(aes(x = N_prob_IWH - N_prob_IWA, y = drawIW), data =
   labs(title = 'IW',
        x = 'P(Home) - P(Away) ',
        y = 'P(Draw) ')
-# Comparison between Normal Version vs No Red Card Version
+
+# Comparison between Normal Version vs No Red Card Version For IW
 grid.arrange(p5,p9,ncol=2)
 ```
 For PS:
@@ -458,16 +473,16 @@ p10 <- ggplot() + geom_point(aes(x = N_prob_PSH - N_prob_PSA, y = drawPS), data 
   labs(title = 'PS',
        x = 'P(Home) - P(Away) ',
        y = 'P(Draw) ')
-# Comparison between Normal Version vs No Red Card Version
+
+# Comparison between Normal Version vs No Red Card Version For PS
 grid.arrange(p6,p10,ncol=2)
 ```
 
 ```{r setup_18, echo = TRUE}
 
-# total plots for no red cards
+# See all the plots at once with no red cards scenario.
 grid.arrange(p7,p8,p9,p10,ncol=2)
 ```
 
 Results for Task 3:
-
-Generally minimum and maximum calculated draw probabilities are changed. 
+When having red card scenario excluded from the betting, it is observed that little changes happened but they were not significant. 
