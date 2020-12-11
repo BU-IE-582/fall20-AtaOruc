@@ -1,0 +1,407 @@
+---
+title: "HOMEWORK 2"
+author: "Enes Ata Oruç"
+date: "11/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+# execute necessary libraries
+library(data.table)
+library(dplyr)
+library(tidyverse)
+library(plotly)
+library(scatterplot3d)
+library(reshape)
+```
+
+### Importing Train Data of X,Y,Z
+
+```{r import data}
+# set working directory and read data
+setwd("~/Desktop/IE 582 Files/HW2")
+x_data=fread("uWaveGestureLibrary_X_TRAIN")
+y_data=fread("uWaveGestureLibrary_Y_TRAIN")
+z_data=fread("uWaveGestureLibrary_Z_TRAIN")
+```
+
+#### Part A) Visualization ####
+
+Let's visualize the instances. Names of first columns identified as "Classes" for X,Y and Z data. Data are filtered by their class informations and x,y,z informations' transposes are taken and then combined together. After that, in order to visualize the gestures, velocities and positions are calculated using cumulative sums of the points. Then as a result class 1's gesture is visualized in 3D. Same ideas and steps goes for the other classes.
+
+```{r change column names}
+#First Column names changed from V1 to Classes
+colnames(x_data)[1]<-"Classes"
+colnames(y_data)[1]<-"Classes"
+colnames(z_data)[1]<-"Classes"
+```
+
+Class 1:
+```{r visualize class 1, warning=FALSE}
+# filter the data by their class numbers then start achieving gestures with x,y,z points, this is for class 1
+instance_1<- as.data.frame(cbind(x=t(filter(x_data,Classes==1))[,1],y=t(filter(y_data,Classes==1))[,1],z=t(filter(z_data,Classes==1))[,1]))[-1,]
+#velocity
+instance_1<- data.frame(instance_1,vel_x=cumsum(instance_1$x),vel_y=cumsum(instance_1$y),vel_z=cumsum(instance_1$z))
+#to obtain positions
+instance_1<- data.frame(instance_1,pos_x=cumsum(instance_1$vel_x),pos_y=cumsum(instance_1$vel_y),pos_z=cumsum(instance_1$vel_z))
+rownames(instance_1) <- 1:nrow(instance_1)
+instance_1$row<-as.numeric(rownames(instance_1))/nrow(instance_1)
+#3D Visualization
+c1 <- plot_ly(instance_1, x = ~pos_x, y = ~pos_y, z = ~pos_z, color = ~row, colors = c('#BF382A', '#0C4B8E'))
+c1 <- c1 %>% add_markers()
+c1 <- c1 %>% layout(scene = list(xaxis = list(title = 'x'),
+                     yaxis = list(title = 'y'),
+                     zaxis = list(title = 'z')))
+c1
+```
+
+Class 2:
+```{r visualize class 2}
+# filter the data by their class numbers then start achiving gestures x,y,z points
+instance_2<- as.data.frame(cbind(x=t(filter(x_data,Classes==2))[,1],y=t(filter(y_data,Classes==2))[,1],z=t(filter(z_data,Classes==2))[,1]))[-1,]
+#velocity
+instance_2<- data.frame(instance_2,vel_x=cumsum(instance_2$x),vel_y=cumsum(instance_2$y),vel_z=cumsum(instance_2$z))
+#to obtain positions
+instance_2<- data.frame(instance_2,pos_x=cumsum(instance_2$vel_x),pos_y=cumsum(instance_2$vel_y),pos_z=cumsum(instance_2$vel_z))
+rownames(instance_2) <- 1:nrow(instance_2)
+instance_2$row<-as.numeric(rownames(instance_2))/nrow(instance_2)
+#3D Visualization
+
+# Class 2 -> c2
+c2 <- plot_ly(instance_2, x = ~pos_x, y = ~pos_y, z = ~pos_z, color = ~row, colors = c('#BF382A', '#0C4B8E'))
+c2 <- c2 %>% add_markers()
+c2 <- c2 %>% layout(scene = list(xaxis = list(title = 'x'),
+                     yaxis = list(title = 'y'),
+                     zaxis = list(title = 'z')))
+c2
+```
+
+Class 3:
+```{r visualize class 3}
+# filter the data by their class numbers then start achiving gestures x,y,z points
+instance_3<- as.data.frame(cbind(x=t(filter(x_data,Classes==3))[,1],y=t(filter(y_data,Classes==3))[,1],z=t(filter(z_data,Classes==3))[,1]))[-1,]
+#velocity
+instance_3<- data.frame(instance_3,vel_x=cumsum(instance_3$x),vel_y=cumsum(instance_3$y),vel_z=cumsum(instance_3$z))
+#to obtain positions
+instance_3<- data.frame(instance_3,pos_x=cumsum(instance_3$vel_x),pos_y=cumsum(instance_3$vel_y),pos_z=cumsum(instance_3$vel_z))
+rownames(instance_3) <- 1:nrow(instance_3)
+instance_3$row<-as.numeric(rownames(instance_3))/nrow(instance_3)
+#3D Visualization
+
+# Class 3 -> c3
+c3 <- plot_ly(instance_3, x = ~pos_x, y = ~pos_y, z = ~pos_z, color = ~row, colors = c('#BF382A', '#0C4B8E'))
+c3 <- c3 %>% add_markers()
+c3 <- c3 %>% layout(scene = list(xaxis = list(title = 'x'),
+                     yaxis = list(title = 'y'),
+                     zaxis = list(title = 'z')))
+c3
+```
+
+Class 4:
+```{r visualize class 4}
+# Class 4 -> c4
+instance_4<- as.data.frame(cbind(x=t(filter(x_data,Classes==4))[,1],y=t(filter(y_data,Classes==4))[,1],z=t(filter(z_data,Classes==4))[,1]))[-1,]
+
+instance_4<- data.frame(instance_4,vel_x=cumsum(instance_4$x),vel_y=cumsum(instance_4$y),vel_z=cumsum(instance_4$z))
+
+instance_4<- data.frame(instance_4,pos_x=cumsum(instance_4$vel_x),pos_y=cumsum(instance_4$vel_y),pos_z=cumsum(instance_4$vel_z))
+rownames(instance_4) <- 1:nrow(instance_4)
+instance_4$row<-as.numeric(rownames(instance_4))/nrow(instance_4)
+
+#3D Visualization
+c4 <- plot_ly(instance_4, x = ~pos_x, y = ~pos_y, z = ~pos_z, color = ~row, colors = c('#BF382A', '#0C4B8E'))
+c4 <- c4 %>% add_markers()
+c4 <- c4 %>% layout(scene = list(xaxis = list(title = 'x'),
+                     yaxis = list(title = 'y'),
+                     zaxis = list(title = 'z')))
+c4
+```
+
+Class 5:
+```{r visualize class 5}
+# Class 5 -> c5
+instance_5<- as.data.frame(cbind(x=t(filter(x_data,Classes==5))[,1],y=t(filter(y_data,Classes==5))[,1],z=t(filter(z_data,Classes==5))[,1]))[-1,]
+
+instance_5<- data.frame(instance_5,vel_x=cumsum(instance_5$x),vel_y=cumsum(instance_5$y),vel_z=cumsum(instance_5$z))
+
+instance_5<- data.frame(instance_5,pos_x=cumsum(instance_5$vel_x),pos_y=cumsum(instance_5$vel_y),pos_z=cumsum(instance_5$vel_z))
+rownames(instance_5) <- 1:nrow(instance_5)
+instance_5$row<-as.numeric(rownames(instance_5))/nrow(instance_5)
+
+#3D Visualization
+c5 <- plot_ly(instance_5, x = ~pos_x, y = ~pos_y, z = ~pos_z, color = ~row, colors = c('#BF382A', '#0C5B8E'))
+c5 <- c5 %>% add_markers()
+c5 <- c5 %>% layout(scene = list(xaxis = list(title = 'x'),
+                     yaxis = list(title = 'y'),
+                     zaxis = list(title = 'z')))
+c5
+```
+
+Class 6:
+```{r visualize class 6}
+# Class 6 -> c6
+instance_6<- as.data.frame(cbind(x=t(filter(x_data,Classes==6))[,1],y=t(filter(y_data,Classes==6))[,1],z=t(filter(z_data,Classes==6))[,1]))[-1,]
+
+instance_6<- data.frame(instance_6,vel_x=cumsum(instance_6$x),vel_y=cumsum(instance_6$y),vel_z=cumsum(instance_6$z))
+
+instance_6<- data.frame(instance_6,pos_x=cumsum(instance_6$vel_x),pos_y=cumsum(instance_6$vel_y),pos_z=cumsum(instance_6$vel_z))
+rownames(instance_6) <- 1:nrow(instance_6)
+instance_6$row<-as.numeric(rownames(instance_6))/nrow(instance_6)
+
+#3D Visualization
+c6 <- plot_ly(instance_6, x = ~pos_x, y = ~pos_y, z = ~pos_z, color = ~row, colors = c('#BF382A', '#0C5B8E'))
+c6 <- c6 %>% add_markers()
+c6 <- c6 %>% layout(scene = list(xaxis = list(title = 'x'),
+                     yaxis = list(title = 'y'),
+                     zaxis = list(title = 'z')))
+c6
+```
+
+Class 7:
+```{r visualize class 7}
+# Class 7 -> c7
+instance_7<- as.data.frame(cbind(x=t(filter(x_data,Classes==7))[,1],y=t(filter(y_data,Classes==7))[,1],z=t(filter(z_data,Classes==7))[,1]))[-1,]
+
+instance_7<- data.frame(instance_7,vel_x=cumsum(instance_7$x),vel_y=cumsum(instance_7$y),vel_z=cumsum(instance_7$z))
+
+instance_7<- data.frame(instance_7,pos_x=cumsum(instance_7$vel_x),pos_y=cumsum(instance_7$vel_y),pos_z=cumsum(instance_7$vel_z))
+rownames(instance_7) <- 1:nrow(instance_7)
+instance_7$row<-as.numeric(rownames(instance_7))/nrow(instance_7)
+
+#3D Visualization
+c7 <- plot_ly(instance_7, x = ~pos_x, y = ~pos_y, z = ~pos_z, color = ~row, colors = c('#BF382A', '#0C5B8E'))
+c7 <- c7 %>% add_markers()
+c7 <- c7 %>% layout(scene = list(xaxis = list(title = 'x'),
+                     yaxis = list(title = 'y'),
+                     zaxis = list(title = 'z')))
+c7
+```
+
+Class 8:
+```{r visualize class 8}
+# Class 8 -> c8
+instance_8<- as.data.frame(cbind(x=t(filter(x_data,Classes==8))[,1],y=t(filter(y_data,Classes==8))[,1],z=t(filter(z_data,Classes==8))[,1]))[-1,]
+
+instance_8<- data.frame(instance_8,vel_x=cumsum(instance_8$x),vel_y=cumsum(instance_8$y),vel_z=cumsum(instance_8$z))
+
+instance_8<- data.frame(instance_8,pos_x=cumsum(instance_8$vel_x),pos_y=cumsum(instance_8$vel_y),pos_z=cumsum(instance_8$vel_z))
+rownames(instance_8) <- 1:nrow(instance_8)
+instance_8$row<-as.numeric(rownames(instance_8))/nrow(instance_8)
+
+#3D Visualization
+c8 <- plot_ly(instance_8, x = ~pos_x, y = ~pos_y, z = ~pos_z, color = ~row, colors = c('#BF382A', '#0C5B8E'))
+c8 <- c8 %>% add_markers()
+c8 <- c8 %>% layout(scene = list(xaxis = list(title = 'x'),
+                     yaxis = list(title = 'y'),
+                     zaxis = list(title = 'z')))
+c8
+```
+
+### Part B: Dimensionality Reduction Approach ###
+
+The data is provided as a regular data matrix. Also, this is an example of multivariate time series.
+In this part, aim is to reduce this multivariate time series to a univariate one with a dimensionality reduction approach.
+One way is transforming data into the following format, so called long format. Data is reduced from 3D to 1D using PCA.
+
+```{r melting and pca for all data, message = TRUE, warning = FALSE, cache = TRUE}
+
+## PCA with using whole data
+
+## Add SeriesID columns to each data. It is basically works as an ID number
+x_data$SeriesID <- c(1:896)
+y_data$SeriesID <- c(1:896)
+z_data$SeriesID <- c(1:896)
+
+## Here comes the melting part
+x_melt <- melt(x_data, id = c("SeriesID", "Classes"))
+y_melt <- melt(y_data, id = c("SeriesID", "Classes"))
+z_melt <- melt(z_data, id = c("SeriesID", "Classes"))
+
+## Combined melt data here
+melt_data <- data.frame(SeriesID = x_melt$SeriesID, Classes = x_melt$Classes, Variable = x_melt$variable,
+                       X = x_melt$value, Y = y_melt$value, Z = z_melt$value)
+melt_data <- melt_data[order(melt_data$SeriesID), ]
+colnames(melt_data)[3] <- "Time_Index"
+melt_data$Time_Index <- rep(1:315, 896)
+
+## Apply PCA with princomp()
+melt_data_pca =  princomp(melt_data[, 4:6])
+
+## Summary for whole PCA
+summary(melt_data_pca, loadings = T)
+
+## dataframe
+pca_data <- data.frame(SeriesID = melt_data$SeriesID, Classes = melt_data$Classes, Time_Index = melt_data$Time_Index,
+                               PCA = melt_data_pca$scores[,1])
+
+## PCA for the Whole Data - Visualization
+## 2 SeriesID's for each class are selected (filter part) arbitrarily and these ID's also used at Part C too.
+
+whole_class_data <- pca_data %>% 
+  filter(SeriesID %in% c(17, 19, 58, 60, 13, 27, 34, 51, 35, 41, 30, 36, 53, 68, 21, 25)) %>% 
+  mutate(SeriesID = as_factor(SeriesID), Classes = as_factor(Classes))
+
+ggplot(whole_class_data, aes(x=Time_Index, y=PCA, colour=SeriesID)) + geom_line() + xlab("Time Index") + ylab("Value") + theme(plot.title=element_text(hjust = 0.5)) + scale_color_discrete(name = "Classes", labels = c("Class6", "Class5", "Class5", "Class3", "Class4", "Class8", "Class7", "Class4", "Class6", "Class1", "Class7", "Class3", "Class2", "Class1", "Class2", "Class8")) 
+
+```
+
+### PCA Visualization for Class Based Approach: ###
+
+Select 2 random time series from each class and visualize the reduced dimensions as time series in a single plot to see if classes can be separated in the reduced dimensions
+All classes will be coded and visualized in same Rmarkdown chunk
+
+```{r pca visualization  for class based, message = FALSE, warning = FALSE, cache = TRUE}
+## Select 2 random time series from each class and visualize the reduced dimensions as time series in a single plot to see if classes can be separated in the reduced dimensions ##
+
+## Class 1
+class1_pca <- data.frame(Time_Index = c(1:315), Obs17 = pca_data$PCA[melt_data$SeriesID == 17],
+                         Obs19 = pca_data$PCA[melt_data$SeriesID == 19])
+c1_pca <- ggplot(class1_pca) +
+  geom_line(aes(x = Time_Index, y = Obs17), color = "red") +
+  geom_line(aes(x = Time_Index, y = Obs19), color = "blue3") +
+  ylab("Observations")
+c1_pca <- ggplotly(c1_pca)
+c1_pca
+
+## Class 2
+class2_pca <- data.frame(Time_Index = c(1:315), Obs58 = pca_data$PCA[melt_data$SeriesID == 58],
+                        Obs60 = pca_data$PCA[melt_data$SeriesID == 60])
+c2_pca <- ggplot(class2_pca) +
+  geom_line(aes(x = Time_Index, y = Obs58), color = "red") +
+  geom_line(aes(x = Time_Index, y = Obs60), color = "blue3") +
+  ylab("Observations")
+c2_pca <- ggplotly(c2_pca)
+c2_pca
+
+## Class 3
+class3_pca <- data.frame(Time_Index = c(1:315), Obs13 = pca_data$PCA[melt_data$SeriesID == 13],
+                        Obs27 = pca_data$PCA[melt_data$SeriesID == 27])
+c3_pca <- ggplot(class3_pca) +
+  geom_line(aes(x = Time_Index, y = Obs13), color = "red") +
+  geom_line(aes(x = Time_Index, y = Obs27), color = "blue3") +
+  ylab("Observations")
+c3_pca <- ggplotly(c3_pca)
+c3_pca
+
+## Class 4
+class4_pca <- data.frame(Time_Index = c(1:315), Obs34 = pca_data$PCA[melt_data$SeriesID == 34],
+                        Obs51 = pca_data$PCA[melt_data$SeriesID == 51])
+c4_pca <- ggplot(class4_pca) +
+  geom_line(aes(x = Time_Index, y = Obs34), color = "red") +
+  geom_line(aes(x = Time_Index, y = Obs51), color = "blue3") +
+  ylab("Observations")
+c4_pca <- ggplotly(c4_pca)
+c4_pca
+
+## Class 5
+class5_pca <- data.frame(Time_Index = c(1:315), Obs35 = pca_data$PCA[melt_data$SeriesID == 35],
+                        Obs41 = pca_data$PCA[melt_data$SeriesID == 41])
+c5_pca <- ggplot(class5_pca) +
+  geom_line(aes(x = Time_Index, y = Obs35), color = "red") +
+  geom_line(aes(x = Time_Index, y = Obs41), color = "blue3") +
+  ylab("Observations")
+c5_pca <- ggplotly(c5_pca)
+c5_pca
+
+## Class 6
+class6_pca <- data.frame(Time_Index = c(1:315), Obs30 = pca_data$PCA[melt_data$SeriesID == 30],
+                        Obs36 = pca_data$PCA[melt_data$SeriesID == 36])
+c6_pca <- ggplot(class6_pca) +
+  geom_line(aes(x = Time_Index, y = Obs30), color = "red") +
+  geom_line(aes(x = Time_Index, y = Obs36), color = "blue3") +
+  ylab("Observations")
+c6_pca <- ggplotly(c6_pca)
+c6_pca
+
+## Class 7
+class7_pca <- data.frame(Time_Index = c(1:315), Obs53 = pca_data$PCA[melt_data$SeriesID == 53],
+                        Obs68 = pca_data$PCA[melt_data$SeriesID == 68])
+c7_pca <- ggplot(class7_pca) +
+  geom_line(aes(x = Time_Index, y = Obs53), color = "red") +
+  geom_line(aes(x = Time_Index, y = Obs68), color = "blue3") +
+  ylab("Observations")
+c7_pca <- ggplotly(c7_pca)
+c7_pca
+
+## Class 8
+class8_pca <- data.frame(Time_Index = c(1:315), Obs21 = pca_data$PCA[melt_data$SeriesID == 21],
+                        Obs25 = pca_data$PCA[melt_data$SeriesID == 25])
+
+c8_pca <- ggplot(class8_pca) +
+  geom_line(aes(x = Time_Index, y = Obs21), color = "red") +
+  geom_line(aes(x = Time_Index, y = Obs25), color = "blue3") +
+  ylab("Observations")
+c8_pca <- ggplotly(c8_pca)
+c8_pca
+```
+
+### Comments on Part B) ###
+
+As it can bee seen from individual class plots, when two random data points compared with each other, they show similar characteristcs.
+When whole data is used for PCA, it can bee seen from the whole data summary output, only 49.06% of the data can be explained with first principal component considered. Now let's do the class based approach to the problem in Part C.
+
+
+
+### Part C) Let's do class based PCA. ###
+
+In order to do that, I used long format data which is melt_data. I split the data according to each Class number. Then I applied the PCA method to that splitted data. And then I showed each classes summary informations. Because I wanted to see how many of the data can be explained by one component.
+
+
+```{r pca for class based, message = TRUE, warning = FALSE, cache = TRUE}
+
+### Let's apply in class based approach
+### Split the melt_data with respect to Classes 
+### melt_data is in long format !!
+split_data <- split(melt_data, melt_data$Classes)
+
+### apply PCA to class based splitted data
+split_data_pca <- map(split_data, ~princomp(.[,4:6]))
+
+### See the importance of components using summary for each class
+map(split_data_pca, summary, loadings = T)
+
+```
+
+### Comments on Part C) ###
+
+In the Whole Data PCA option 49.06% of the data could be explained with one component. In this class based approach except for the Class 1, because 46% is less then 49.06%, PCA performed more meaningful for class based approach. Since Class 2, Class 3, Class 4, Class 5, Class 6, Class 7 and Class 8's proportions are greater then 49.06%.
+
+
+### Part D) Aim of this part is to visualize the time series in reduced dimensions for classification purposes. ###
+
+Let’s apply multi-dimensional scaling to this distance matrix to represent each time series on a 2-dimensional feature space. ###
+Dimension of the data is high. So, instead of using Euclidean Distance I decided to use Manhattan Distance method for MSD. 
+
+```{r manhattan distance visualize-mds}
+### let's find x distances, y distances and z distances as distance matrix using manhattan distance method
+x_dist <- as.matrix(dist(x_data[, 2:316], method = "manhattan",  diag = FALSE, upper = FALSE))
+y_dist <- as.matrix(dist(y_data[, 2:316], method = "manhattan",  diag = FALSE, upper = FALSE))
+z_dist <- as.matrix(dist(z_data[, 2:316], method = "manhattan",  diag = FALSE, upper = FALSE))
+
+### Combine the distance data created above
+all_distance <- (x_dist + y_dist + z_dist)
+
+### Classical multidimensional scaling (MDS) of a data matrix.
+cmdscale_distance <- cmdscale(all_distance, k = 2)
+
+### MDS interpreted as data.table
+### Class information added and heading of distances changed as distance_1 and distance_2
+cmdscale_distance <- data.table(unlist(apply(x_data[, 1], 2, as.character)), distance_1 = cmdscale_distance[,1], distance_2 = cmdscale_distance[,2])
+
+### Plot the distances
+ggplot(cmdscale_distance, aes(x = distance_1, y = distance_2, color = Classes)) +
+  geom_point() +
+  labs(title = "MDS Results",
+       x = "First Distance",
+       y = "Second Distance")
+```
+
+### Comments on Part D) ###
+
+When we look at the plot, we see that distribution (variance actually) is really high in almost every class. MDS is not a useful way in order to separate the gestures.
