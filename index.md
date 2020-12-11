@@ -11,3 +11,6 @@ There will be the assignments done for this course.
 
 ### Homework Assignment 1
 - [English Premier League](Files/HW1_IE582.html): Homework1 English Premier League plots and analysis.
+
+### Homework Assignment 2
+- [Gesture Recognition](Files/Homework2.html): Homework2 PCA-Gesture Recognition homework plots and analysis.
