@@ -1,0 +1,213 @@
+---
+title: "HOMEWORK 3"
+author: "Enes Ata Oruç"
+date: "01/01/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Libraries
+
+```{r libraries, message=FALSE, warning=FALSE}
+# execute necessary libraries
+library(MLmetrics)
+library(data.table)
+library(dplyr)
+library(tidyverse)
+library(plotly)
+library(scatterplot3d)
+library(reshape)
+library(lubridate)
+library(glmnet)
+library(caret)
+
+```
+
+### Importing and Manuplating Real Time Consumption data.
+
+  Before starting to Tasks, we should be doing some data manuplations first. I defined Date column as a Date type, Hour and Consumption Values are defined as numaric values. Decimal separators for the consumption data was confusing for R, so I changed the seperator type to "," from ".". There was also another issue about dublicating time. I detected the date first and then gave it NA values. I didn't want to delete whole day because that would cause time shifts.
+
+```{r import data}
+# set working directory and read data
+setwd("~/Desktop/IE 582 Files/HW3")
+cons_data=fread("GercekZamanliTuketim.csv")
+colnames(cons_data) = c('Date', 'Hour', 'Consumption')
+
+# change variable types
+# Date became date type
+cons_data$Date <- dmy(cons_data$Date) 
+
+# Show only Hour number
+cons_data$Hour <- hm(cons_data$Hour)
+cons_data$Hour <- cons_data$Hour$hour
+# Consumption became double type
+cons_data$Consumption <- gsub(".", "", cons_data$Consumption, fixed = T)
+cons_data$Consumption <- as.numeric(gsub(",", ".", cons_data$Consumption, fixed = T)) 
+
+head(cons_data)
+
+# Every day should have unique hours. There should be no dublicates. Let's check it.
+sum(duplicated(cons_data[,1:2]))
+# we saw that there is a dublicated value in our data. Now let's detect which one
+cons_data[which(duplicated(cons_data)),]
+
+# We saw that there is a dublicate value in date 27.03.2016 because of the government's time policy. 
+# So, values for 27.03.2016 will be shown as NA
+
+is.na(cons_data$Consumption) <- cons_data$Date == "2016-03-27"
+
+```
+
+### TASK 1: Navie Approach ####
+
+In this task I will be predicting with consumption amount with 2-days period (lag_48) and 7-days period(lag_168). Than I will be calculating MAPE values in order to determine which approach is better.
+
+```{r naive approach, message=FALSE, warning=FALSE}
+# Whole data with Lag columns added
+# pred_date created. This will be used as whole data for predictions until a new data is needed.
+pred_data <- cons_data %>% arrange(Date,Hour) %>% 
+  mutate(lag_48 = lag(Consumption, 48)) %>% 
+  mutate(lag_168 = lag(Consumption, 168))
+
+#Test Set
+test_cons_data <- pred_data[pred_data$Date >= "2020-11-01",]
+
+#MAPE Calculations for Test Set
+mape_test_value48 <- MAPE(test_cons_data$lag_48, test_cons_data$Consumption)
+mape_test_value168 <- MAPE(test_cons_data$lag_168, test_cons_data$Consumption)
+mape_test_value48
+mape_test_value168
+
+```
+
+  So we see that 2 day lag (lag_48) approach gives 0.08060315 MAPE. 7 day lag (lag_168) approach gives 0.03449188 MAPE. This shows us using weekly seasonality is much more meaningful than 2 days seasonality for predicting next electric consumption values.
+
+#### TASK 2: Linear Regression Approach ####
+
+  Another approach for a forecasting is treating lag consumptions as features and In this section I will be building a linear regression model. First, let's start with creating Train set without NA's and then build LR model and train the Test set. After the Linear Regression approach MAPE will be calculated again.
+
+```{r linear regression model, message=FALSE, warning=FALSE}
+# Train Set without NA's
+train_cons_data <- pred_data[pred_data$Date < "2020-11-01",]
+train_cons_data <- na.omit(train_cons_data)
+
+regression_cons_data = lm(Consumption ~ lag_168 + lag_48, data = train_cons_data)
+summary(regression_cons_data)
+```
+
+  MAPE with LR. Training the Test Set. 
+```{r linear regression model complete, message=FALSE, warning=FALSE}
+lr_predict=predict(regression_cons_data, newdata = test_cons_data)
+MAPE_lr <- MAPE(lr_predict, test_cons_data$Consumption)
+MAPE_lr
+```
+
+MAPE Value for the linear regression (LR) approach didn't give better solution than the naive lag168 approach. Becase MAPE value for LR is 0.04231015 which worse than 0.03449188 (lag168 MAPE value). So, using regression model is not good enough to make a prediction.
+
+#### TASK 3: Hourly Seasonality ####
+
+  So far we treated every Hour like they have same coefficients but this might not the correct assumption since night time consumptions may be different. In this section I will remodel the problem with considering each hour seperately.
+  For the hourly seasonality I will create a for loop for hours then calculate the MAPE again.
+
+```{r hourly model, message=FALSE, warning=FALSE}
+hourly_MAPE <- data.frame(Hour = 0:23, MAPE = rep(NA, 24))
+for(i in 0:23){
+  seasonal_hour <- lm(Consumption ~ lag_48 + lag_168, data = train_cons_data[train_cons_data$Hour == i,])
+  pred_hour <- predict(seasonal_hour, newdata = test_cons_data[test_cons_data$Hour == i,])
+  hourly_MAPE$MAPE[i+1] <- MAPE(pred_hour, test_cons_data[test_cons_data$Hour == i,]$Consumption)
+}
+summary(hourly_MAPE$MAPE)
+hourly_MAPE[hourly_MAPE$MAPE < MAPE(test_cons_data$lag_168, test_cons_data$Consumption),]
+m<-mean(hourly_MAPE$MAPE)
+```
+
+  As a result of this approach,Mean MAPE value for the assumption is 0.04361 which is still not better then weekly assumption.
+So, there is still not much improvement. I said not much because there are actually some hours that gave better solutions. Early in the mornings and late hours are created a group. So, this assumption is kind of useful in that sense.
+  
+#### TASK 4 Alternative Way to Hourly Approach ####
+
+An alternative approach assuming that all hourly consumption values of last week (same day) can be important in the prediction of the next day’s consumption. I have to pivot my data from long to wide format, dcast() casts the data from long to wide format. It is in "data.table" package and I will be using that. 
+
+There is some data manupilation steps for lasso calculation. I transformed some of the features into the matrix form. Used L1 penalty (lambda1se) in my regression models for each hour.
+
+```{r alternative, message=FALSE, warning=FALSE}
+# wide format for whole data
+lag_48 = dcast(pred_data, Date~Hour, fun = mean, value.var = "lag_48", fill = 0)
+lag_168 = dcast(pred_data, Date~Hour, fun = mean, value.var = "lag_168", fill = 0)
+colnames(lag_48) = c("Date", paste("Lag_day2_hour", 0:23, sep = "_"))
+colnames(lag_168) = c("Date", paste("lag_day7_hour", 0:23, sep = "_"))
+wide_format = pred_data %>% 
+  left_join(lag_48) %>%
+  left_join(lag_168)
+wide_format <- wide_format[, !c("lag_48","lag_168")]
+wide_format <- data.table(wide_format[, c(1, 2,4:51, 3)])
+wide_format <- na.omit(wide_format)
+
+# Test and Train sets in wide format
+wide_test <- wide_format[wide_format$Date >= "2020-11-01",]
+wide_train <- wide_format[wide_format$Date < "2020-11-01",]
+
+# Change to matrix for lasso implementation
+matrix_test <- as.matrix(wide_test %>% select(-Date))
+matrix_train <- as.matrix(wide_train %>% select(-Date))
+
+# hold features in different set
+train_features <- matrix_train[, 2:49]
+
+# lasso model calculation
+lasso_model <- cv.glmnet(x=train_features, y=wide_train$Consumption)
+lasso_model
+
+
+# hold lambda1se value for further calculation
+lambda1se <- lasso_model$lambda.1se
+
+# appyly lasso to each hour
+lasso1se_hourly = data.table()
+
+for (i in 0:23){
+  X_train = wide_format[Hour == i & Date < '2020-11-01',]
+  X_train = as.matrix(X_train[,3:50])
+  y_train = as.matrix(wide_format[Hour == i & Date < '2020-11-01', Consumption])
+  X_test = wide_format[Hour == i & Date >= '2020-11-01',]
+  X_test = as.matrix(X_test[,3:50])
+  y_test = as.matrix(wide_format[Hour == i & Date >= '2020-11-01', Consumption])
+  lasso_hourly = glmnet(X_train,
+                             y_train,
+                             alpha = 1,
+                             lambda = lambda1se)
+  pred_lasso = predict(lasso_hourly, newx = X_test)
+  MAPE_lasso = MAPE(pred_lasso, y_test)
+  lasso1se_hourly = rbind(lasso1se_hourly, data.table(Hour = i, MAPE = MAPE_lasso))
+}
+
+lasso1se_hourly
+MAPE_lasso
+## compare hourly predictions and naive appr.
+lasso1se_hourly[lasso1se_hourly$MAPE < MAPE(test_cons_data$lag_168, test_cons_data$Consumption),]
+```
+
+  When all the approaches are considered it can be seen that penalized regression models with L1 penalty performed the best predictions. All hours from 2 days and 7 days should be considered while making predictions. There is also a similarity between Task 4 and Task 3, some of the hours showed the same characteristics what I mean by this is early in the mornings and evening hours.
+
+
+#### Task 6: Ploting #### 
+Task says: Compare the results drawing a boxplot of MAPE values for each approach on same plot.
+
+```{r all plots, message=FALSE, warning=FALSE}
+# general boxplot for all assumptions
+MAPE_plot = data.table(MAPE = c(mape_test_value48,mape_test_value168,MAPE_lr, hourly_MAPE$MAPE, lasso1se_hourly$MAPE), Model = c('lag 48', 'lag 168', 'Linear Regression', paste(0:23, 'Hourly_Regression', sep = '_'), paste(0:23, 'Lasso_1se', sep = '_')))
+
+ggplot(data = MAPE_plot) +
+  geom_boxplot(aes(y = MAPE))
+
+## best approaches with minimum error
+order_MAPE_plot <- MAPE_plot[order(MAPE_plot$MAPE, decreasing = FALSE),]  
+head(order_MAPE_plot)
+```
+
+Top approaches belongs to lasso with L1 penalty.
+
+
