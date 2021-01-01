@@ -14,3 +14,6 @@ There will be the assignments done for this course.
 
 ### Homework Assignment 2
 - [Gesture Recognition](Files/Homework2.html): Homework2 PCA-Gesture Recognition homework plots and analysis.
+
+### Homework Assignment 3
+- [Regression Approaches on Turkey's Real Time Power Consumption](Files/IE582_HW3.html): Homework3
