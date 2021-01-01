@@ -209,5 +209,3 @@ head(order_MAPE_plot)
 ```
 
 Top approaches belongs to lasso with L1 penalty.
-
-
