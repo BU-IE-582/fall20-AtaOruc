@@ -24,4 +24,8 @@ Classification Tasks
 
 - [Different Classification Approaches on Absenteeism Dataset](Files/Absenteeism-Data.html): Second Data
 
+- [Different Classification Approaches on Student Performance Dataset](Files/StudentPerformanceData.html): Third Data
+
+- [Different Classification Approaches on Student Performance Dataset]
+
 
