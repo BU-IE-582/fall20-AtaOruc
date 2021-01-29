@@ -22,7 +22,7 @@ There will be the assignments done for this course.
 Classification Tasks
 - [Different Classification Approaches on Fetal Health Dataset](Files/Fetal Health Data Report.html): First Data
 
-- [Different Classification Approaches on Absenteeism Dataset](Files/Absenteeism-Data.html): Second Data
+- [Different Classification Approaches on Absenteeism Dataset](Files/AbsenteeismData.html): Second Data
 
 - [Different Classification Approaches on Student Performance Dataset](Files/StudentPerformanceData.html): Third Data
 
