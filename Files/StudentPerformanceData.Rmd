@@ -1,0 +1,296 @@
+---
+title: "**Homework 4 Classification**"
+author: "Enes Ata Oruç"
+date: "29.01.2021"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+  The aim of this homework is to compare the performance of penalized regression approaches, decision trees, support vector machines and tree-based ensembles.
+We are asked to find 4 datasets for a classification task from different domains. This report is created for Student Performance Dataset.
+
+### Student Performance Data: ###
+  This dataset contains 649 observations and 33 features about student performance in Porteguese Language. This dataset also mixed with numeric and categorical features and was modeled under binary/five-level classification and regression tasks. 
+Student Performance Data in Porteguese Class: (https://archive.ics.uci.edu/ml/datasets/student%2Bperformance)
+  
+  There is also a paper published about this dataset. There will be Pass and Fail condition
+according to student grades.
+
+Related paper: http://www3.dsi.uminho.pt/pcortez/student.pdf
+
+```{r,message=FALSE, error=FALSE}
+# important libraries
+library(tidyverse)
+library(data.table)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+library(mlbench)
+library(MLmetrics)
+library(dplyr)
+library(caret)
+library(readr)
+
+```
+  
+  Creating the Letter grade column based on overall grade(G3). Pass/Fail decision made by the boundaries 
+stated in the published paper for this dataset. If G3>10 Pass(1), if <10 Fail(0).
+Numbers and Letter representations:
+1 -> Pass
+2 -> Fail
+
+
+  G1,G2 and G3 removed from the data because they directly correlated with the Letter grades. So, overfiting prevented.
+```{r,message=FALSE, error=FALSE}
+stud_dt <- fread("student.csv")
+stud_dt$Record = ifelse(stud_dt$G3 >=10, 1,2)
+stud_dt$Record = as.numeric(stud_dt$Record)
+stud_dt$G1 <- NULL
+stud_dt$G2 <- NULL
+stud_dt$G3 <- NULL
+stud_dt$Letter <- NULL
+
+```
+
+## 1. Penalized Regression Approach: ##
+
+```{r}
+
+library(glmnet)
+stud_dt$Record <- as.numeric(stud_dt$Record)
+smp_size_pra <- floor((2/3) * nrow(stud_dt))
+
+# set the seed to make your partition reproducible
+set.seed(1234)
+train_ind_pra <- sample(seq_len(nrow(stud_dt)), size = smp_size_pra)
+
+train_pra <- stud_dt[train_ind_pra, ]
+test_pra <- stud_dt[-train_ind_pra, ]
+
+
+health_mat_2 <- data.matrix(train_pra)
+cvfit=cv.glmnet(health_mat_2, train_pra$Record,family='gaussian',nfolds=10)
+cvfit
+lambda_min <- cvfit$lambda.min
+lambda_min
+# Lasso with Train Set
+lassofit <- glmnet(x=health_mat_2, y = train_pra$Record, alpha = 1,lambda = lambda_min)
+lasso_train_predicted <-as.numeric(predict(lassofit, newx=data.matrix(train_pra)))
+
+# RMSE for Train Lasso
+caret::RMSE(lasso_train_predicted, train_pra$Record)
+
+# Lasso with Test Set
+lasso_test_predicted <-as.numeric(predict(lassofit, newx=data.matrix(test_pra)))
+# RMSE for Test Lasso
+caret::RMSE(lasso_test_predicted, test_pra$Record)
+
+```
+
+## 2. Decision Tree Approach: ##
+
+```{r stud_dt, message=FALSE, warning=FALSE}
+# 2/3 of the sample size stud_dt
+stud_dt$Record <- as.numeric(stud_dt$Record)
+smp_size_dt <- floor((2/3) * nrow(stud_dt))
+
+# set the seed to make your partition reproducible
+set.seed(123)
+train_ind_dt <- sample(seq_len(nrow(stud_dt)), size = smp_size_dt)
+
+train_dt_stud <- stud_dt[train_ind_dt, ]
+test_dt_stud <- stud_dt[-train_ind_dt, ]
+
+#method is "class" because I want to perform classification
+mytree_stud <- rpart(
+  Record ~ ., 
+  data = train_dt_stud, 
+  method = "class"
+)
+
+# plot mytree
+fancyRpartPlot(mytree_stud, caption = NULL)
+
+printcp(mytree_stud) # display the results 
+plotcp(mytree_stud) # visualize cross-validation results 
+summary(mytree_stud) # detailed summary of splits
+
+#prediction
+predictions <- predict(mytree_stud, test_dt_stud, type = "class")
+predictions = as.numeric(predictions)
+# Prediction measures
+table(test_dt_stud$Record, predictions)
+#RMSE Value for performance test
+RMSE(test_dt_stud$Record,predictions)
+```
+
+## 3. Random Forest Approach ##
+
+```{r}
+#Random Forest Approach
+stud_dt$Record = as.factor(stud_dt$Record)
+#Test/train split
+smp_size <- floor((2/3) * nrow(stud_dt))
+
+# set the seed to make your partition reproducible
+set.seed(1234)
+train_ind <- sample(seq_len(nrow(stud_dt)), size = smp_size)
+train_rf <- stud_dt[train_ind, ]
+test_rf <- stud_dt[-train_ind, ]
+x <- train_rf[,1:30]
+y <- train_rf[,31] 
+#RF Implement
+control <- trainControl(method="repeatedcv", number=10, repeats=3)
+seed <- 5
+metric <- "Accuracy"
+set.seed(1234)
+mtry <- sqrt(ncol(x))
+tunegrid <- expand.grid(.mtry=mtry)
+rf_default <- train(Record~., data=train_rf, method="rf", metric=metric, tuneGrid=tunegrid, trControl=control)
+print(rf_default)
+# accuracy calculation of prediction
+predictForest_2 = predict(rf_default, newdata = test_rf)
+table(test_rf$Record, predictForest_2)
+
+test_rf$Record<-as.numeric(test_rf$Record)
+#RMSE Value for performance test
+predictForest_2 <- as.numeric(predictForest_2)
+RMSE(test_rf$Record,predictForest_2)
+```
+
+## 4. Stochastic Gradient Approach: ##
+
+```{r sga, message=FALSE, warning=FALSE}
+library(gbm)
+
+stud_dt$Record = as.numeric(stud_dt$Record)
+stud_dt$age = as.factor(stud_dt$age)
+stud_dt$sex = as.factor(stud_dt$sex)
+stud_dt$school = as.factor(stud_dt$school)
+stud_dt$address = as.factor(stud_dt$address)
+stud_dt$famsize = as.factor(stud_dt$famsize)
+stud_dt$Pstatus = as.factor(stud_dt$Pstatus)
+stud_dt$Mjob = as.factor(stud_dt$Mjob)
+stud_dt$Fjob = as.factor(stud_dt$Fjob)
+stud_dt$reason = as.factor(stud_dt$reason)
+stud_dt$guardian = as.factor(stud_dt$guardian)
+stud_dt$schoolsup = as.factor(stud_dt$schoolsup)
+stud_dt$famsup = as.factor(stud_dt$famsup)
+stud_dt$paid = as.factor(stud_dt$paid)
+stud_dt$activities = as.factor(stud_dt$activities)
+stud_dt$nursery = as.factor(stud_dt$nursery)
+stud_dt$higher = as.factor(stud_dt$higher)
+stud_dt$internet = as.factor(stud_dt$internet)
+stud_dt$romantic = as.factor(stud_dt$romantic)
+#Test/train split
+smp_size <- floor((2/3) * nrow(stud_dt))
+
+# set the seed to make your partition reproducible
+set.seed(1234)
+
+train_ind <- sample(seq_len(nrow(stud_dt)), size = smp_size)
+train_sgb <- stud_dt[train_ind, ]
+test_sgb <- stud_dt[-train_ind, ]
+# randomize data
+random_index <- sample(1:nrow(train_sgb), nrow(train_sgb))
+random_sgb_train <- train_sgb[random_index, ]
+
+# modify hyperparameter grid
+hyper_grid <- expand.grid(
+  shrinkage = c(.01, .05, .1),
+  interaction.depth = c(3, 5, 7),
+  n.minobsinnode = c(5, 7, 10),
+  bag.fraction = c(.65, .8, 1), 
+  optimal_trees = 0,               # a place to dump results
+  min_RMSE = 0                     # a place to dump results
+)
+
+# total number of combinations
+nrow(hyper_grid)
+## [1] 81
+
+# grid search 
+for(i in 1:nrow(hyper_grid)) {
+  
+  # reproducibility
+  set.seed(123)
+  
+  # train model
+  gbm.tune <- gbm(formula = Record ~ .,
+    distribution = "gaussian",
+    data = random_sgb_train,
+    n.trees = 600,
+    interaction.depth = hyper_grid$interaction.depth[i],
+    shrinkage = hyper_grid$shrinkage[i],
+    n.minobsinnode = hyper_grid$n.minobsinnode[i],
+    bag.fraction = hyper_grid$bag.fraction[i],
+    train.fraction = .75,
+    n.cores = NULL, # will use all cores by default
+    verbose = FALSE
+  )
+  
+  # add min training error and trees to grid
+  hyper_grid$optimal_trees[i] <- which.min(gbm.tune$valid.error)
+  hyper_grid$min_RMSE[i] <- sqrt(min(gbm.tune$valid.error))
+}
+
+hyper_grid %>% 
+  dplyr::arrange(min_RMSE) %>%
+  head(10)
+
+# for reproducibility
+set.seed(123)
+
+# train GBM model
+gbm.fit.final <- gbm(formula = Record ~ .,
+  distribution = "gaussian",
+  data = train_sgb,
+  n.trees = 483,
+  interaction.depth = 5,
+  shrinkage = 0.1,
+  n.minobsinnode = 5,
+  bag.fraction = .65, 
+  train.fraction = 1,
+  n.cores = NULL, # will use all cores by default
+  verbose = FALSE
+  )  
+# predict values for test data
+pred <- predict(gbm.fit.final, n.trees = gbm.fit.final$n.trees, test_sgb)
+
+# results
+caret::RMSE(pred, test_sgb$Record)
+```
+
+## Compare Results ##
+Penalized Regression Approach
+```{r compare pra, message=FALSE, warning=FALSE}
+# RMSE for Test Lasso
+caret::RMSE(lasso_test_predicted, test_pra$Record)
+```
+Decision Tree Approach
+```{r compare DT, message=FALSE, warning=FALSE}
+#RMSE Value for performance test DT
+RMSE(test_dt_stud$Record,predictions)
+```
+Random Forest
+```{r compare rf, message=FALSE, warning=FALSE}
+# RMSE Value for performance test
+predictForest_2 <- as.numeric(predictForest_2)
+RMSE(test_rf$Record,predictForest_2)
+```
+Stochastic Gradient Boosting
+```{r compare sgb, message=FALSE, warning=FALSE}
+# results
+caret::RMSE(pred, test_sgb$Record)
+```
+
+
+  When we looked at the RMSE values I believe there is some miscalculation happened in lasso approach because its value doesn't seem realistic. This lasso situation also happened on different datasets. But I tuned the other 3 approaches. Because of this meaningful assumptions, I believe they gave more reliable results. 
+
+  So, when we consider the other approaches Random Forest gave the best classification result on Student performance data with lowest RMSE value. But Stochastic Gradient Boosting also performed similar to Random Forest. Targer determined as Pass or Fail class. This target column determined by the researches that provided this dataset. 
