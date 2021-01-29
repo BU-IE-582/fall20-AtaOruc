@@ -17,3 +17,8 @@ There will be the assignments done for this course.
 
 ### Homework Assignment 3
 - [Regression Approaches on Turkey's Real Time Power Consumption](Files/IE582_HW3.html): Homework3
+
+### Homework Assignment 4
+Classification Tasks
+- [Different Classification Approaches on Fetal Health Dataset-Dataset #1](Files/Fetal Health Dataset Report.html)
+
