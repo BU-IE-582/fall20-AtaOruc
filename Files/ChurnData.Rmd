@@ -1,0 +1,254 @@
+---
+title: "**Homework 4 Classification**"
+author: "Enes Ata Oruç"
+date: "29.01.2021"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+  
+  The aim of this homework is to compare the performance of penalized regression approaches, decision trees, support vector machines and tree-based ensembles.
+We are asked to find 4 datasets for a classification task from different domains. This report is created for BankChurners Dataset.
+
+### Credit Card Churn Data:  (https://www.kaggle.com/sakshigoyal7/credit-card-customers)
+  This dataset contains 740 observations and 21 features extracted from Cardiotocogram exams. Target column determined by the owners of the data. The target column is Attrition_Flag.
+2- Existing Customer
+1- Churned Customer
+
+  
+
+```{r, message=FALSE, warning=FALSE}
+library(caTools)
+library(randomForest)
+library(ROCR)
+library(tidyverse)
+library(data.table)
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+library(mlbench)
+library(MLmetrics)
+library(dplyr)
+library(caret)
+library(readr)
+```
+
+## 1. Penalized Regression Approach: ##
+
+Altough I couldn't apply PRA properly (As with other datasets.) I wanted to share the code I used. I am open for feedbacks for this approach...
+
+```{r pra}
+# Read data
+churn <- fread("BankChurners.csv")
+
+##
+##
+# Not Working Properly
+
+library(glmnet)
+churn$Attrition_Flag <- as.factor(churn$Attrition_Flag)
+smp_size_pra <- floor((2/3) * nrow(churn))
+
+# set the seed to make your partition reproducible
+set.seed(1234)
+train_ind_pra <- sample(seq_len(nrow(churn)), size = smp_size_pra)
+
+train_pra <- churn[train_ind_pra, ]
+test_pra <- churn[-train_ind_pra, ]
+
+
+#churn_mat_2 <- data.matrix(train_pra)
+#cvfit=cv.glmnet(churn_mat_2, train_pra$Attrition_Flag,family='gaussian',nfolds=10)
+#cvfit
+#lambda_min <- cvfit$lambda.min
+#lambda_min
+# Lasso with Train Set
+#lassofit <- glmnet(x=churn_mat_2, y = train_pra$Attrition_Flag, alpha = 1,lambda = lambda_min)
+#lasso_train_predicted <-as.numeric(predict(lassofit, newx=data.matrix(train_pra)))
+
+# RMSE for Train Lasso
+#caret::RMSE(lasso_train_predicted, train_pra$Attrition_Flag)
+
+# Lasso with Test Set
+#lasso_test_predicted <-as.numeric(predict(lassofit, newx=data.matrix(test_pra)))
+# RMSE for Test Lasso
+#caret::RMSE(lasso_test_predicted, test_pra$Attrition_Flag)
+
+```
+
+## 2. Decision Tree Approach: ##
+
+```{r churn, message=FALSE, warning=FALSE}
+# 75% of the sample size churn
+churn$Attrition_Flag <- as.numeric(churn$Attrition_Flag)
+smp_size_dt <- floor((2/3) * nrow(churn))
+
+# set the seed to make your partition reproducible
+set.seed(123)
+train_ind_dt <- sample(seq_len(nrow(churn)), size = smp_size_dt)
+
+train_dt_churn <- churn[train_ind_dt, ]
+test_dt_churn <- churn[-train_ind_dt, ]
+
+#method is "class" because I want to perform classification
+mytree_churn <- rpart(
+  Attrition_Flag ~ ., 
+  data = train_dt_churn, 
+  method = "class"
+)
+
+# plot mytree
+fancyRpartPlot(mytree_churn, caption = NULL)
+
+printcp(mytree_churn) # display the results 
+plotcp(mytree_churn) # visualize cross-validation results 
+summary(mytree_churn) # detailed summary of splits
+
+#prediction
+predictions <- predict(mytree_churn, test_dt_churn, type = "class")
+predictions = as.numeric(predictions)
+# Prediction measures
+table(test_dt_churn$Attrition_Flag, predictions)
+#RMSE Value for performance test
+RMSE(test_dt_churn$Attrition_Flag,predictions)
+```
+
+## 3. Random Forest Approach on churneeism Dataset: ##
+
+```{r}
+#Random Forest Approach
+churn$Attrition_Flag = as.numeric(churn$Attrition_Flag)
+#Test/train split
+smp_size <- floor((2/3) * nrow(churn))
+
+# set the seed to make your partition reproducible
+set.seed(1234)
+
+train_ind <- sample(seq_len(nrow(churn)), size = smp_size)
+train_rf <- churn[train_ind, ]
+test_rf <- churn[-train_ind, ]
+# randomize data
+random_index <- sample(1:nrow(train_rf), nrow(train_rf))
+random_rf_train <- train_rf[random_index, ]
+
+# Fit random forest: model
+# Set seed
+set.seed(33)
+# Fit a model
+model <- train(Attrition_Flag~.,
+               data = random_rf_train,
+               method = "ranger",
+               trControl = trainControl(method = "cv", number = 5)
+                             )
+# Let's check the model
+model
+fit <- predict(model, newdata = test_rf)
+fit_model <- train(Attrition_Flag~.,
+               data = test_rf,
+               method = "ranger",
+               trControl = trainControl(method = "cv", number = 5)
+                            )
+fit_model
+test_rf$Attrition_Flag <- as.numeric(test_rf$Attrition_Flag)
+# RMSE for measure error
+RMSE(test_rf$Attrition_Flag,fit)
+```
+
+## 4. Stochastic Gradient Approach: ##
+
+```{r sga, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(corrplot)
+library(caret)
+library(xgboost)
+
+churn = churn[,-c(1,22,23)]
+churn %>% select(where(is.numeric)) %>% as.matrix() %>%
+cor() %>% corrplot(method = "number", type="lower")
+
+dmy <- dummyVars(" ~ .", data = churn, fullRank = T)
+BankChurners_transformed <- data.frame(predict(dmy, newdata = churn))
+
+BankChurners_transformed.y = BankChurners_transformed[,1]
+BankChurners_transformed.x = BankChurners_transformed[,-1]
+
+trainIndex = sample(1:length(BankChurners_transformed.y), length(BankChurners_transformed.y)*.8)
+
+#creating training data set by selecting the output row values
+train.x = BankChurners_transformed.x[trainIndex,]
+train.y = BankChurners_transformed.y[trainIndex]
+
+#creating test data set by not selecting the output row values
+test.x = BankChurners_transformed.x[-trainIndex,]
+test.y = BankChurners_transformed.y[-trainIndex]
+
+train.data.x <- as.data.frame(lapply(train.x, as.numeric))
+test.data.x <- as.data.frame(lapply(test.x, as.numeric))
+
+# convert data to xgboost format
+train.xgb <- xgb.DMatrix(data = data.matrix(train.data.x), label = train.y)
+test.xgb <- xgb.DMatrix(data = data.matrix(test.data.x), label = test.y)
+params <- list (
+                eta = 0.4,
+                max_depth = 10,
+                min_child_weight = 0.5,
+                subsample = 1,
+                colsample_bytree = 1,
+                objective = "multi:softmax",
+                eval_metric = "merror",
+                num_class = 2
+)
+xgb.model <- xgb.train(params, train.xgb, nrounds = 10)
+
+# predict values for test data
+xgb.predict <- predict(xgb.model, test.xgb)
+xgb.cm = confusionMatrix(as.factor(xgb.predict), as.factor(test.y))
+print(xgb.cm)
+
+
+```
+
+## Compare Results ##
+Penalized Regression Approach
+```{r compare pra, message=FALSE, warning=FALSE}
+# RMSE for Test Lasso
+#caret::RMSE(lasso_test_predicted, test_pra$Attrition_Flag)
+```
+Decision Tree Approach
+```{r compare DT, message=FALSE, warning=FALSE}
+#RMSE Value for performance test DT
+RMSE(test_dt_churn$Attrition_Flag,predictions)
+```
+Random Forest
+```{r compare rf, message=FALSE, warning=FALSE}
+# RMSE Value for performance test
+RMSE(test_rf$Attrition_Flag,fit)
+```
+Stochastic Gradient Boosting
+```{r compare sgb, message=FALSE, warning=FALSE}
+# results
+print(xgb.cm)
+```
+
+  When we looked at the RMSE values I believe there is some miscalculation happened in lasso approach because its value doesn't seem realistic. This lasso situation also happened on different datasets. But I tuned the other 3 approaches. Because of this meaningful assumptions, I believe they gave more reliable results. 
+
+  So, when we consider the other approaches Gradient Boosting gave the best classification result on churn data.Its accuracy is also really high. There was 2 different classes in Target colum (Attrition_Flag). This target column determined by the researches that provided this dataset. 
+
+2- Existing Customer
+1- Churned Customer
+
+
+
+
+
+
+
+
+
+
