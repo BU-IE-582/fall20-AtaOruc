@@ -26,6 +26,6 @@ Classification Tasks
 
 - [Different Classification Approaches on Student Performance Dataset](Files/StudentPerformanceData.html): Third Data HTML Report
 
-- [Different Classification Approaches on Student Performance Dataset](Files/ChurnData.Rmd): Fourth Data R Code (Knit to HTML gave me a strange error...)
+- [Different Classification Approaches on Bank Churners Dataset](Files/ChurnData.Rmd): Fourth Data R Code (Knit to HTML gave me a strange error...)
 
 
