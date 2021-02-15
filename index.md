@@ -28,4 +28,7 @@ Classification Tasks
 
 - [Different Classification Approaches on Bank Churners Dataset](Files/ChurnData.Rmd): Fourth Data R Code (Knit to HTML gave me a strange error...)
 
+### IE 582 Project Assignment
+- [Classification Approaches Project](Files/IE582_ProjectCodes.R): Different data mining techniques applied in order to build a proper classification model.
+
 
