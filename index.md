@@ -30,5 +30,6 @@ Classification Tasks
 
 ### IE 582 Project Assignment
 - [Classification Approaches Project](Files/IE582_ProjectCodes.R): Different data mining techniques applied in order to build a proper classification model.
+- Project Report [here](Files/IE 582 - Project Report.pdf)
 
 
